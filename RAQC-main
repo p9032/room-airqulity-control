@@ -1,0 +1,39 @@
+#control room airqulity
+
+#define input and output leg
+define dht_pin  1;
+define aqi_pin  5;
+
+#define variable
+float temperature 
+int Humidity
+int aqi
+
+
+#read DHT-11 , return temperature and Humidity
+dht_read(temperature, Humidity){}
+
+#read SHARP , return aqi
+aqi_read(aqi){}
+
+#show temperature , humidity ,aqi looply
+lcd_show(){}
+
+#set control Threshold
+para_set(){}
+
+#read realtime model and return the time
+time_read(){}
+
+#Dehumidifier on/off control
+Dehumidifier_control(){}
+
+#Purifier on/off control
+Purifier_control(){}
+
+#fan on/off control
+fan_control(){}
+
+setup(){}
+
+loog(){}
