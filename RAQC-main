@@ -1,8 +1,9 @@
-#control room airqulity
+//control room airqulity
+//include "dht.h"  
 
-#define input and output leg
-define dht_pin  1;
-define aqi_pin  5;
+//define input and output leg
+#define DHT11PIN 2
+#define aqi_pin  5
 
 #define variable
 float temperature 
@@ -10,30 +11,75 @@ int Humidity
 int aqi
 
 
-#read DHT-11 , return temperature and Humidity
-dht_read(temperature, Humidity){}
+//read DHT-11 , return temperature and Humidity
+int dht_read(temperature, Humidity)
+{
+  Serial.println("\n");
+ 
+  int chk = DHT11.read(DHT11PIN);
+ 
+  Serial.print("Read sensor: ");
+  switch (chk)
+  {
+    case DHTLIB_OK: 
+                Serial.println("OK"); 
+                break;
+    case DHTLIB_ERROR_CHECKSUM: 
+                Serial.println("Checksum error"); 
+                break;
+    case DHTLIB_ERROR_TIMEOUT: 
+                Serial.println("Time out error"); 
+                break;
+    default: 
+                Serial.println("Unknown error"); 
+                break;
+  }
+ 
+  humidity=DHT11.humidity;
+  temperature=DHT11.temperature;
 
-#read SHARP , return aqi
+
+}
+
+//read SHARP , return aqi
 aqi_read(aqi){}
 
-#show temperature , humidity ,aqi looply
+//show temperature , humidity ,aqi looply
 lcd_show(){}
 
-#set control Threshold
+//set control Threshold
 para_set(){}
 
-#read realtime model and return the time
+//read realtime model and return the time
 time_read(){}
 
-#Dehumidifier on/off control
+//Dehumidifier on/off control
 Dehumidifier_control(){}
 
-#Purifier on/off control
+//Purifier on/off control
 Purifier_control(){}
 
-#fan on/off control
+//fan on/off control
 fan_control(){}
 
-setup(){}
+setup(){
+  Serial.begin(9600);
+  Serial.println("DHT11 TEST PROGRAM ");
+  Serial.print("LIBRARY VERSION: ");
+  Serial.println(DHT11LIB_VERSION);
+  Serial.println();
 
-loog(){}
+}
+
+loog()
+{
+
+  dht_read(temperature, Humidity);
+  Serial.print("Humidity (%): ");
+  Serial.println((float)DHT11.humidity, 2);
+ 
+  Serial.print("Temperature (oC): ");
+  Serial.println((float)DHT11.temperature, 2);
+
+  delay(2000);
+}
