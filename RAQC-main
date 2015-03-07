@@ -1,5 +1,30 @@
+//control room airqulity
+#include "DHT.h"  
+#include <LiquidCrystal.h>
 #include <DS3231.h>
 #include <Wire.h>
+
+
+//define input and output leg
+#define DHT11PIN 2        //pin2  --D2
+#define AQIPIN  21        //pin21 --A1
+
+//define variable
+DHT dht;
+float temperature ;
+float humidity;
+int dht_ok_or_not;
+int aqi;
+
+//key variables
+LiquidCrystal lcd(8, 13, 9, 4, 5, 6, 7);
+int adc_key_val[5] ={50, 200, 400, 600, 800 };
+int NUM_KEYS = 5;
+int adc_key_in;
+int key=-1;
+int oldkey=-1;
+
+//clock variables
 DS3231 Clock;
 bool Century=false;
 bool h12;
@@ -7,51 +32,166 @@ bool PM;
 byte ADay, AHour, AMinute, ASecond, ABits;
 bool ADy, A12h, Apm;
 byte year, month, date, DoW, hour, minute, second;
-void setup() {
- // 启动I2C(IIC)接口
- Wire.begin();
-        //以下部分是初始化时间，每次板子通电之后都会初始化成这个时间，只是测试用，以后可以删除。
-        Clock.setSecond(50);//Set the second 
-        Clock.setMinute(59);//Set the minute 设置分钟
-        Clock.setHour(11);  //Set the hour 设置小时
-        Clock.setDoW(5);    //Set the day of the week 设置星期几
-        Clock.setDate(31);  //Set the date of the month 设置月份
-        Clock.setMonth(5);  //Set the month of the year 设置一年中的月份
-        Clock.setYear(13);  //Set the year (Last two digits of the year) 设置年份(在今年的最后两位数——比如2013年最后的13)
- // Start the serial interface
- Serial.begin(115200);
+
+//threshod
+str menu [8] ={"vent","vent time","humi high","humi low","pour method","pour time","pour time","pour high","pour low"};
+int threshod [8] ={0,0,80,60,0,0,200,100};		//80% on;60% off;aqi 200 on;aqi 100 off
+int menu_num=0;
+
+//read DHT-11 , return temperature and Humidity
+void dht_read()
+{
+	humidity=dht.getHumidity();
+	temperature=dht.getTemperature();  
 }
+
+//show temp&humidity
+void lcd_show()
+{
+    Serial.print("Humidity (%): ");
+    Serial.println(humidity, 2);
+    lcd.setCursor(0, 0);
+    lcd.print("Humi (%): ");
+    lcd.print(humidity);
+    
+    Serial.print("Temperature (oC): ");
+    Serial.println(temperature, 2);
+    lcd.setCursor(0, 1);
+    lcd.print("Temp(oC): ");
+    lcd.print(temperature);
+    
+	Serial.print("20");
+	Serial.print(year,DEC);
+	Serial.print('-');
+	Serial.print(month,DEC);
+	Serial.print('-');
+	Serial.print(date,DEC);
+	Serial.print(' ');
+	Serial.print(hour,DEC);
+	Serial.print(':');
+	Serial.print(minute,DEC);
+	Serial.print(':');
+	Serial.print(second,DEC);
+	Serial.print('\n');
+}
+
+//clock read
 void ReadDS3231()
 {
-  int second,minute,hour,date,month,year,temperature; 
-  second=Clock.getSecond();
-  minute=Clock.getMinute();
-  hour=Clock.getHour(h12, PM);
-  date=Clock.getDate();
-  month=Clock.getMonth(Century);
-  year=Clock.getYear();
+	int second,minute,hour,date,month,year,temperature; 
+	second=Clock.getSecond();
+	minute=Clock.getMinute();
+	hour=Clock.getHour(h12, PM);
+	date=Clock.getDate();
+	month=Clock.getMonth(Century);
+	year=Clock.getYear();
   
-  temperature=Clock.getTemperature();
   
-  Serial.print("20");
-  Serial.print(year,DEC);
-  Serial.print('-');
-  Serial.print(month,DEC);
-  Serial.print('-');
-  Serial.print(date,DEC);
-  Serial.print(' ');
-  Serial.print(hour,DEC);
-  Serial.print(':');
-  Serial.print(minute,DEC);
-  Serial.print(':');
-  Serial.print(second,DEC);
-  Serial.print('\n');
-  Serial.print("Temperature=");  //这里是显示温度
-  Serial.print(temperature); 
-  Serial.print('\n');
+	Serial.print("20");
+	Serial.print(year,DEC);
+	Serial.print('-');
+	Serial.print(month,DEC);
+	Serial.print('-');
+	Serial.print(date,DEC);
+	Serial.print(' ');
+	Serial.print(hour,DEC);
+	Serial.print(':');
+	Serial.print(minute,DEC);
+	Serial.print(':');
+	Serial.print(second,DEC);
+	Serial.print('\n');
+
 }
-void loop() 
+
+//menu & keyin
+int key_press_or_not()
 {
-  ReadDS3231();
-  delay(1000);  //间隔1000ms(1000ms=1秒)循环一次。
+  adc_key_in = analogRead(0);    // read the value from the sensor 
+  key = get_key(adc_key_in);  // convert into key press
+  if (key != oldkey) return 1 else return 0   // if keypress is detected 
+}
+
+void key_menu()
+{
+    lcd.print("                ");  //clear
+	
+	delay(50);  // wait for debounce time
+    adc_key_in = analogRead(0);    // read the value from the sensor 
+    key = get_key(adc_key_in);    // convert into key press
+    if (key != oldkey)    
+    {   
+      lcd.setCursor(0, 1);
+      oldkey = key;
+      if (key >=0) lcd.print(menu[menu_num]);              
+      menu_set()
+    }
+    delay(100);
+}
+
+void show_menu()
+{
+}
+
+
+
+void menu_set()
+{
+}
+
+
+// Convert ADC value to key number
+int get_key(unsigned int input)
+{
+    int k;
+   
+    for (k = 0; k < NUM_KEYS; k++)
+    {
+      if (input < adc_key_val[k])
+      {
+            return k;
+        }
+   }
+   
+    if (k >= NUM_KEYS)k = -1;  // No valid key pressed
+    return k;
+}
+
+
+void setup(){
+	// 启动I2C(IIC)接口
+	Wire.begin();
+	//以下部分是初始化时间，每次板子通电之后都会初始化成这个时间，只是测试用，以后可以删除。
+	Clock.setSecond(50);//Set the second 
+	Clock.setMinute(59);//Set the minute 设置分钟
+	Clock.setHour(11);  //Set the hour 设置小时
+	Clock.setDoW(5);    //Set the day of the week 设置星期几
+	Clock.setDate(31);  //Set the date of the month 设置月份
+	Clock.setMonth(5);  //Set the month of the year 设置一年中的月份
+	Clock.setYear(13);  //Set the year (Last two digits of the year) 设置年份(在今年的最后两位数——比如2013年最后的13)
+	// Start the serial interface
+	Serial.begin(9600);   //时间例子中是115200
+  
+	//初始化LCD
+	lcd.clear(); 
+	lcd.begin(16, 2);
+	lcd.setCursor(0,0); 
+   
+	//初始化DHT11 
+	pinMode (AQIPIN, INPUT);
+	dht.setup(DHT11PIN); // data pin 2
+    
+	Serial.println("SETUP PARAMETER");
+	Serial.println();
+
+}
+
+void loop()
+{
+	if (key_press_or_not())  key_menu() ;
+	
+	dht_read();
+	ReadDS3231();
+	lcd_show();
+
+	delay(2000);
 }
