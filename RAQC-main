@@ -2,50 +2,57 @@
 //include "dht.h"  
 
 //define input and output leg
-#define DHT11PIN 2
-#define aqi_pin  5
+#define DHT11PIN 2        //pin2  --D2
+#define AQIPIN  21        //pin21 --A1
+
 
 #define variable
 float temperature 
 int Humidity
+int dht_ok_or_not
 int aqi
 
 
 //read DHT-11 , return temperature and Humidity
-int dht_read(temperature, Humidity)
+int dht_read()
 {
-  Serial.println("\n");
- 
-  int chk = DHT11.read(DHT11PIN);
- 
-  Serial.print("Read sensor: ");
-  switch (chk)
-  {
-    case DHTLIB_OK: 
-                Serial.println("OK"); 
-                break;
-    case DHTLIB_ERROR_CHECKSUM: 
-                Serial.println("Checksum error"); 
-                break;
-    case DHTLIB_ERROR_TIMEOUT: 
-                Serial.println("Time out error"); 
-                break;
-    default: 
-                Serial.println("Unknown error"); 
-                break;
-  }
- 
+  
+  dht_ok_or_not = DHT11.read(DHT11PIN);
   humidity=DHT11.humidity;
   temperature=DHT11.temperature;
-
-
+  
 }
 
 //read SHARP , return aqi
 aqi_read(aqi){}
 
 //show temperature , humidity ,aqi looply
-lcd_show(){}
+lcd_show()
+{
+  if dht_ok_or_not == DHTLIB_OK
+  {
+    Serial.print("Humidity (%): ");
+    Serial.println((float)DHT11.humidity, 2);
+    
+    Serial.print("Temperature (oC): ");
+    Serial.println((float)DHT11.temperature, 2);
+  }
+  else
+  {
+    switch (chk)
+    {
+      case DHTLIB_ERROR_CHECKSUM: 
+  		Serial.print("Checksum error,\t"); 
+  		break;
+      case DHTLIB_ERROR_TIMEOUT: 
+  		Serial.print("Time out error,\t"); 
+  		break;
+      default: 
+  		Serial.print("Unknown error,\t"); 
+  		break;
+  	}
+  }
+}
 
 //set control Threshold
 para_set(){}
@@ -54,15 +61,46 @@ para_set(){}
 time_read(){}
 
 //Dehumidifier on/off control
-Dehumidifier_control(){}
+Dehumidifier_control()
+{
+  if Humidity > 85 
+  {
+    //set on
+  }  
+  if Humidity < 70
+  {
+    //setoff
+  }
+
+
+}
+
 
 //Purifier on/off control
-Purifier_control(){}
+Purifier_control()
+{
+  if aqi > 150 
+  {
+    //set on
+  }  
+  if aqi < 150
+  {
+    //setoff
+  }
+}
 
 //fan on/off control
-fan_control(){}
+fan_control()
+{
+  //if time=on_time   on
+  //half an hour, set off
+}
 
 setup(){
+
+
+  pinMode (DHT11PIN, INPUT);
+  pinMode (AQIPIN, INPUT);
   Serial.begin(9600);
   Serial.println("DHT11 TEST PROGRAM ");
   Serial.print("LIBRARY VERSION: ");
@@ -74,12 +112,8 @@ setup(){
 loog()
 {
 
-  dht_read(temperature, Humidity);
-  Serial.print("Humidity (%): ");
-  Serial.println((float)DHT11.humidity, 2);
- 
-  Serial.print("Temperature (oC): ");
-  Serial.println((float)DHT11.temperature, 2);
+  dht_read();
+  lcd_show();
 
   delay(2000);
 }
