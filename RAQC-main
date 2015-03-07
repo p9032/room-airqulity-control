@@ -1,5 +1,5 @@
 //control room airqulity
-//include "dht.h"  
+#include "DHT.h"  
 
 //define input and output leg
 #define DHT11PIN 2        //pin2  --D2
@@ -7,111 +7,43 @@
 
 
 #define variable
-float temperature 
-int Humidity
-int dht_ok_or_not
-int aqi
+DHT dht;
+float temperature ;
+float humidity;
+int dht_ok_or_not;
+int aqi;
 
 
 //read DHT-11 , return temperature and Humidity
-int dht_read()
+
+void dht_read()
 {
-  
-  dht_ok_or_not = DHT11.read(DHT11PIN);
-  humidity=DHT11.humidity;
-  temperature=DHT11.temperature;
-  
+  humidity=dht.getHumidity();
+  temperature=dht.getTemperature();  
 }
 
-//read SHARP , return aqi
-aqi_read(aqi){}
 
-//show temperature , humidity ,aqi looply
-lcd_show()
+void lcd_show()
 {
-  if dht_ok_or_not == DHTLIB_OK
-  {
     Serial.print("Humidity (%): ");
-    Serial.println((float)DHT11.humidity, 2);
+    Serial.println(humidity, 2);
     
     Serial.print("Temperature (oC): ");
-    Serial.println((float)DHT11.temperature, 2);
-  }
-  else
-  {
-    switch (chk)
-    {
-      case DHTLIB_ERROR_CHECKSUM: 
-  		Serial.print("Checksum error,\t"); 
-  		break;
-      case DHTLIB_ERROR_TIMEOUT: 
-  		Serial.print("Time out error,\t"); 
-  		break;
-      default: 
-  		Serial.print("Unknown error,\t"); 
-  		break;
-  	}
-  }
+    Serial.println(temperature, 2);
 }
 
-//set control Threshold
-para_set(){}
+void setup(){
 
-//read realtime model and return the time
-time_read(){}
-
-//Dehumidifier on/off control
-Dehumidifier_control()
-{
-  if Humidity > 85 
-  {
-    //set on
-  }  
-  if Humidity < 70
-  {
-    //setoff
-  }
-
-
-}
-
-
-//Purifier on/off control
-Purifier_control()
-{
-  if aqi > 150 
-  {
-    //set on
-  }  
-  if aqi < 150
-  {
-    //setoff
-  }
-}
-
-//fan on/off control
-fan_control()
-{
-  //if time=on_time   on
-  //half an hour, set off
-}
-
-setup(){
-
-
-  pinMode (DHT11PIN, INPUT);
   pinMode (AQIPIN, INPUT);
+  dht.setup(DHT11PIN); // data pin 2
   Serial.begin(9600);
   Serial.println("DHT11 TEST PROGRAM ");
-  Serial.print("LIBRARY VERSION: ");
-  Serial.println(DHT11LIB_VERSION);
   Serial.println();
 
 }
 
-loog()
+void loop()
 {
-
   dht_read();
   lcd_show();
 
