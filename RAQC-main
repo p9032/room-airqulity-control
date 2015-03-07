@@ -1,21 +1,29 @@
 //control room airqulity
 #include "DHT.h"  
+#include <LiquidCrystal.h>
 
 //define input and output leg
 #define DHT11PIN 2        //pin2  --D2
 #define AQIPIN  21        //pin21 --A1
 
 
-#define variable
+//define variable
 DHT dht;
 float temperature ;
 float humidity;
 int dht_ok_or_not;
 int aqi;
 
+LiquidCrystal lcd(8, 13, 9, 4, 5, 6, 7);
+
+//key variables
+int adc_key_val[5] ={50, 200, 400, 600, 800 };
+int NUM_KEYS = 5;
+int adc_key_in;
+int key=-1;
+int oldkey=-1;
 
 //read DHT-11 , return temperature and Humidity
-
 void dht_read()
 {
   humidity=dht.getHumidity();
@@ -27,13 +35,23 @@ void lcd_show()
 {
     Serial.print("Humidity (%): ");
     Serial.println(humidity, 2);
+    lcd.setCursor(0, 0);
+    lcd.print("Humi (%): ");
+    lcd.print(humidity);
     
     Serial.print("Temperature (oC): ");
     Serial.println(temperature, 2);
+    lcd.setCursor(0, 1);
+    lcd.print("Temp(oC): ");
+    lcd.print(temperature);
+    
 }
 
 void setup(){
-
+  lcd.clear(); 
+  lcd.begin(16, 2);
+  lcd.setCursor(0,0); 
+   
   pinMode (AQIPIN, INPUT);
   dht.setup(DHT11PIN); // data pin 2
   Serial.begin(9600);
