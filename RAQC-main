@@ -8,6 +8,9 @@
 //define input and output leg
 #define DHT11PIN 2        //pin2  --D2
 #define AQIPIN  21        //pin21 --A1
+#define DEHUMIPIN  
+#define POURERPIN
+#define FANPIN   
 
 //define variable
 DHT dht;
@@ -36,6 +39,7 @@ byte year, month, date, DoW, hour, minute, second;
 //threshod
 str menu [8] ={"vent","vent time","humi high","humi low","pour method","pour time","pour time","pour high","pour low"};
 int threshod [8] ={0,0,80,60,0,0,200,100};		//80% on;60% off;aqi 200 on;aqi 100 off
+int threshod_mode[8] ={0,0,1,1,0,0,2,2};		//0--bool;1--0to100;2--0to500
 int menu_num=0;
 
 //read DHT-11 , return temperature and Humidity
@@ -113,37 +117,93 @@ int key_press_or_not()
 
 void key_menu()
 {
-    lcd.print("                ");  //clear
+    lcd.print("                ");  //clear the LCD
+	key = get_key()；
 	
-	delay(50);  // wait for debounce time
-    adc_key_in = analogRead(0);    // read the value from the sensor 
-    key = get_key(adc_key_in);    // convert into key press
-    if (key != oldkey)    
-    {   
-      lcd.setCursor(0, 1);
-      oldkey = key;
-      if (key >=0) lcd.print(menu[menu_num]);              
-      menu_set()
-    }
-    delay(100);
+	while (key != 5)
+	{
+		switch (key)
+		{
+			case 1:		//up
+				if (menu_num==7) menu_num=0;
+				menu_num=menu_num+1;
+				menu_show();
+				break;
+			case 2: 	//down
+				if (menu_num==0) menu_num=7;
+				menu_num=menu_num-1;
+				menu_show();
+				break;
+			case 3:		//left
+				menu_set();
+				menu_show();
+				break;
+			case 4:
+				menu_set();
+				menu_show();
+				break;
+			defaut:		//??
+			
+				break;	
+			oldkey = key;
+		}
+	}
+
 }
 
-void show_menu()
+void menu_show()
 {
+	lcd.setCursor(0, 0);
+	lcd.print(menu[menu_num]);
+	lcd.setCursor(0, 1);
+	lcd.print(threshod[menu_num]);
 }
-
 
 
 void menu_set()
 {
+	switch (threshod_mode[menu_num])	//choose menu data range
+	{
+	case 0:
+		if (threshod[menu_num]==0)		threshod[menu_num]=1;
+		if (threshod[menu_num]==1)		threshod[menu_num]=0;
+		break;
+	case 1:
+		if (key==3)		
+		{
+			threshod[menu_num]++;
+			if (threshod[menu_num] >=100)  threshod[menu_num]=0;			
+		}
+		if (key==4)		
+		{
+			threshod[menu_num]--;
+			if (threshod[menu_num] <=0 or )  threshod[menu_num]=100;			
+		}
+		break;
+	case 2:
+		if (key==3)		
+		{
+			threshod[menu_num]++;
+			if (threshod[menu_num] >=500)  threshod[menu_num]=0;			
+		}
+		if (key==4)		
+		{
+			threshod[menu_num]--;
+			if (threshod[menu_num] <=0 or )  threshod[menu_num]=100;			
+		}
+		break;
+	
+	}
+	threshod[menu_num]=   ;
 }
 
 
 // Convert ADC value to key number
-int get_key(unsigned int input)
+int get_key()
 {
     int k;
-   
+	delay(50);  // wait for debounce time
+	adc_key_in = analogRead(0);    // read the value from the sensor
     for (k = 0; k < NUM_KEYS; k++)
     {
       if (input < adc_key_val[k])
@@ -154,6 +214,32 @@ int get_key(unsigned int input)
    
     if (k >= NUM_KEYS)k = -1;  // No valid key pressed
     return k;
+	
+}
+
+void pourer()
+{
+	if (menu[5]==0) 
+	{
+	//time control
+	}
+	else
+	{
+		if (aqi>threshod[7]) digitalWrite(POURERPIN,HIGH);
+		if (aqi>threshod[8]) digitalWrite(POURERPIN,LOW);
+	}
+
+}
+
+void Dehumidifier() 
+{
+	if (humidity>threshod[3]) digitalWrite(DEHUMIPIN,HIGH);
+	if (humidity>threshod[4]) digitalWrite(DEHUMIPIN,LOW);
+}
+
+void fan() 
+{
+	//time control
 }
 
 
@@ -192,6 +278,10 @@ void loop()
 	dht_read();
 	ReadDS3231();
 	lcd_show();
+	pourer();
+	Dehumidifier();
+	fan();
+	
 
 	delay(2000);
 }
